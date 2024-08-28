@@ -48,27 +48,17 @@ fn calculate_for_surface(
 
     let ooz = 1.0 / z; //reverse
 
-    let xp = (width as f32 / 2.0 + horizontal_offset + k1 * ooz * x * 2.0).round() as isize; //calculates the point in the center + the offset + k1 to see how large it should be + ooz to check if its visible
-    let yp = (height as f32 / 2.0 + k1 * ooz * y).round() as isize;
+    let mut xp = (width as f32 / 2.0 + horizontal_offset + k1 * ooz * x * 2.0).round() as isize; //calculates the point in the center + the offset + k1 to see how large it should be + ooz to check if its visible
+    let mut yp = (height as f32 / 2.0 + k1 * ooz * y).round() as isize;
 
-    if xp < 0 || xp >= width as isize || yp < 0 || yp >= height as isize {
-        eprintln!(
-            "Out of bounds: xp={}, yp={}, width={}, height={}",
-            xp, yp, width, height
-        );
-        return;
-    }
+    xp = xp.clamp(0, width as isize - 1);
+    yp = yp.clamp(0, height as isize - 1);
 
     let idx = (xp + yp * width as isize) as usize; //what idx to place the char in the Buffer
 
-    if let Some(z_buf) = z_buffer.get_mut(idx) {
-        if ooz > *z_buf {
-            //checks if char is visible in rotating cube
-            *z_buf = ooz;
-            if let Some(buf) = buffer.get_mut(idx) {
-                *buf = ch; //places char
-            }
-        }
+    if ooz > z_buffer[idx] {
+        z_buffer[idx] = ooz;
+        buffer[idx] = ch;
     }
 }
 
@@ -81,7 +71,7 @@ fn main() {
 
     let distance_from_cam = 100.0; //used to change size of all cubes if you have multiple
     let k1 = 40.0;
-    let increment_speed = 0.6; //speed of cube
+    let increment_speed = 0.4; //speed of cube
 
     let mut buffer = vec![' '; width * height]; //cube array
     let mut z_buffer = vec![0.0; width * height]; //visible? array
@@ -217,9 +207,9 @@ fn main() {
 
         handle.flush().unwrap();
 
-        a += 0.05;
-        b += 0.05;
-        c += 0.01;
+        a += 0.04;
+        b += 0.04;
+        c += 0.008;
         sleep(Duration::from_millis(16));
     }
 }
